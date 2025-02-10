@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head>
+  <meta charset="UTF-8">
+  <title>Participated Polls</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container">
+  <h1 class="mt-4 mb-3">Participated Surveys</h1>
+
+  <ul class="list-group">
+    <th:block th:if="${not #lists.isEmpty(polls)}">
+      <li th:each="poll : ${polls}" class="list-group-item">
+        <h5 th:text="${poll.name}"></h5>
+        <div class="row">
+
+          <div class="col-sm-2 mt-2">
+            <a th:href="@{/poll/{id}/my-submission(id=${poll.id})}" class="btn btn-warning">View Your Submission</a>
+          </div>
+
+          <div class="col-sm-2 mt-2">
+            <a th:href="@{/poll/{id}(id=${poll.id})}" class="btn btn-info">Edit Your Submission</a>
+          </div>
+
+          <div class="col-sm-2 mt-2">
+            <form th:action="@{/poll/{id}/delete-submission(id=${poll.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete your submission?');">
+              <button type="submit" class="btn btn-danger">Delete Your Submission</button>
+            </form>
+          </div>
+
+<!--          <th:block th:if="${poll.user.username == currentUsername}">-->
+<!--            <div class="col-sm-2 mt-2">-->
+<!--              <a th:href="@{/poll/{id}/results(id=${poll.id})}" class="btn btn-warning">View Results</a>-->
+<!--            </div>-->
+<!--            <div class="col-sm-2 mt-2">-->
+<!--              <a th:href="@{/poll/edit/{id}(id=${poll.id})}" class="btn btn-info">Edit Survey</a>-->
+<!--            </div>-->
+<!--            <div class="col-sm-2 mt-2">-->
+<!--              <form th:action="@{/poll/delete/{id}(id=${poll.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this poll?');">-->
+<!--                <button type="submit" class="btn btn-danger">Delete Survey</button>-->
+<!--              </form>-->
+<!--            </div>-->
+<!--          </th:block>-->
+
+        </div>
+      </li>
+    </th:block>
+    <th:block th:if="${#lists.isEmpty(polls)}">
+      <li class="list-group-item">No participated surveys found.</li>
+    </th:block>
+  </ul>
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+</body>
+</html>

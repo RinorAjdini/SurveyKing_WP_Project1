@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Poll</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container">
+  <h2 class="mt-4 mb-3" th:text="${poll.name}"></h2>
+
+  <form th:action="@{/vote}" method="post">
+    <input type="hidden" name="pollId" th:value="${poll.id}"/>
+
+    <div th:each="question : ${poll.questions}">
+      <div class="form-group">
+        <label th:text="${question.text}"></label>
+        <select name="selectedOptions" class="form-control" required>
+          <option th:each="option : ${question.options}"
+                  th:value="${option.id}"
+                  th:text="${option.description}"
+                  th:selected="${#lists.contains(selectedOptions, option)}">
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Vote</button>
+  </form>
+
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>My Surveys</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container">
+    <h1 class="mt-4 mb-3">My Surveys</h1>
+
+    <ul class="list-group">
+        <th:block th:if="${not #lists.isEmpty(polls)}">
+            <li th:each="poll : ${polls}" class="list-group-item">
+                <h3 th:text="${poll.name}"></h3>
+                <!-- Display the total number of participants -->
+                <h6>Total of <span th:text="${participantsCountMap[poll.id]}"></span> users have participated in your survey</h6>
+                <p>You received <span th:text="${poll.getLikes()}"></span> likes for this survey!</p>
+                <div class="row">
+                    <!-- Button to view survey results -->
+                    <div class="col-sm-2 mt-2">
+                        <a th:href="@{/poll/{id}/results(id=${poll.id})}" class="btn btn-warning">Detailed Results</a>
+                    </div>
+                    <!-- Button to edit the survey -->
+                    <div class="col-sm-2 mt-2">
+                        <a th:href="@{/poll/edit/{id}(id=${poll.id})}" class="btn btn-info">Edit Survey</a>
+                    </div>
+                    <!-- Button to delete the survey -->
+                    <div class="col-sm-2 mt-2">
+                        <form th:action="@{/poll/delete/{id}(id=${poll.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this survey?');">
+                            <button type="submit" class="btn btn-danger">Delete Survey</button>
+                        </form>
+                    </div>
+                </div>
+            </li>
+        </th:block>
+        <th:block th:if="${#lists.isEmpty(polls)}">
+            <li class="list-group-item">No surveys created by you found.</li>
+        </th:block>
+    </ul>
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>My Submission</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container">
+  <h1 class="mt-4 mb-3">My Submission for Poll: <span th:text="${poll.name}"></span></h1>
+
+  <th:block th:if="${selectedOptions != null}">
+    <div th:each="option : ${selectedOptions}">
+      <h5 th:text="${option.question.text}"></h5>
+      <p>Your answer: <span th:text="${option.description}"></span></p>
+    </div>
+  </th:block>
+
+  <th:block th:if="${selectedOptions == null || #lists.isEmpty(selectedOptions)}">
+    <p>You have not submitted any answers for this poll.</p>
+  </th:block>
+
+  <a th:href="@{/participated-polls}" class="btn btn-secondary mt-4">Back to Participated Polls</a>
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+</body>
+</html>

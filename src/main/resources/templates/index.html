@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>SurveyKing</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .form-inline-custom {
+            max-width: 400px; /* Set a max-width for the search and sort forms */
+        }
+    </style>
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container-fluid">
+    <h1 class="mt-4 mb-3">Available Surveys</h1>
+
+    <!-- Search form and Sort Select in the same row -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-sm-12 mb-2 d-flex justify-content-start">
+            <!-- Search form -->
+            <form th:action="@{/search}" method="get" class="d-flex form-inline-custom">
+                <input type="text" name="query" class="form-control mr-2" placeholder="Search polls..." aria-label="Search">
+                <button type="submit" class="btn btn-outline-success">Search</button>
+            </form>
+        </div>
+        <div class="col-md-6 col-sm-12 d-flex justify-content-end">
+            <!-- Sort Select -->
+            <form th:action="@{/?}" method="get" class="d-flex form-inline-custom">
+                <select name="sort" id="sort" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">Sort by:</option>
+                    <option value="likesAsc" th:selected="${sort == 'likesAsc'}">Likes Ascending</option>
+                    <option value="likesDesc" th:selected="${sort == 'likesDesc'}">Likes Descending</option>
+                    <option value="createdAtAsc" th:selected="${sort == 'createdAtAsc'}">Date Created Ascending</option>
+                    <option value="createdAtDesc" th:selected="${sort == 'createdAtDesc'}">Date Created Descending</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Responsive Table -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>User</th>
+                <th>Survey Name</th>
+                <th>Date Created</th>
+                <th>Questions</th>
+                <th>Likes</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <th:block th:if="${not #lists.isEmpty(polls)}">
+                <tr th:each="poll : ${polls}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <!-- Display user's profile picture -->
+                            <img th:src="${poll.user.role.name() == 'ADMIN' ? '/images/admin.jpg' : '/images/default_user.jpg'}"
+                                 alt="Profile Picture" class="profile-picture">
+                            <span th:text="${poll.user.username}"></span>
+                        </div>
+                    </td>
+                    <td th:text="${poll.name}"></td>
+                    <td th:text="${#dates.format(poll.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                    <td th:text="${poll.questions.size()}"></td>
+                    <td th:text="${poll.getLikes()}"></td>
+                    <td>
+                        <!-- Like Button -->
+                        <form th:action="@{/poll/{id}/like(id=${poll.id})}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-primary" th:text="${pollLikeStatus[poll.id]} ? 'Dislike' : 'Like'">Like</button>
+                        </form>
+                        <a th:href="@{/poll/{id}(id=${poll.id})}" class="btn btn-success">Submit Vote</a>
+                        <br/>
+                        <!-- Actions for Owner or Admin -->
+                        <th:block th:if="${poll.user.username == currentUsername} or ${#authorization.expression('hasRole(''ADMIN'')')}">
+                            <div class="d-flex align-items-center mt-2">
+                                <a th:href="@{/poll/{id}/results(id=${poll.id})}" class="btn btn-warning mr-2">View Results</a>
+                                <a th:href="@{/poll/edit/{id}(id=${poll.id})}" class="btn btn-info mr-2">Edit Survey</a>
+                                <form th:action="@{/poll/delete/{id}(id=${poll.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this poll?');" class="d-inline">
+                                    <button type="submit" class="btn btn-danger">Delete Survey</button>
+                                </form>
+                            </div>
+                        </th:block>
+                    </td>
+                </tr>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(polls)}">
+                <tr>
+                    <td colspan="6">No surveys available.</td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+    </div>
+
+    <a href="/poll/create" class="btn btn-primary mt-4">Create New Survey</a>
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+
+<!-- Add Bootstrap JS and dependencies for select functionality -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

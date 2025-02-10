@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Poll</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .option-block input {
+      padding-left: 20px;
+      width: 80%;
+    }
+  </style>
+</head>
+<body>
+<div th:insert="~{fragments/header :: header}"></div>
+<div class="container">
+
+  <div th:if="${error}" class="alert alert-danger">
+    <p th:text="${error}"></p>
+  </div>
+  <h1 class="mt-4 mb-3">Create a New Survey</h1>
+  <form th:action="@{/poll/create}" method="post">
+    <div class="form-group">
+      <label for="name">Survey Name:</label>
+      <input type="text" id="name" name="name" class="form-control" required>
+    </div>
+    <div id="questionsContainer">
+      <div class="form-group question-block" data-question-index="0">
+        <label>Question:</label>
+        <input type="text" name="questions[0].text" class="form-control mb-2" placeholder="Question Text" required>
+          <div style="margin-bottom: 5px"></div>
+        <div class="optionsContainer">
+          <div class="form-group option-block">
+            <input type="text" name="questions[0].options[0].description" class="form-control mb-2" placeholder="Option 1" required>
+          </div>
+          <div class="form-group option-block">
+            <input type="text" name="questions[0].options[1].description" class="form-control mb-2" placeholder="Option 2" required>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary add-option-btn mb-2">Add Option</button>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary mt-2" id="addQuestionBtn">Add Question</button>
+    <button type="submit" class="btn btn-success mt-2">Create Survey</button>
+  </form>
+
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+<script>
+  let questionIndex = 0;
+  let optionIndices = {};
+
+  function addQuestionBlock() {
+    const questionsContainer = document.getElementById('questionsContainer');
+
+    questionIndex++;
+    optionIndices[questionIndex] = 2;
+
+    const newQuestionBlock = document.createElement('div');
+    newQuestionBlock.className = 'question-block form-group';
+    newQuestionBlock.innerHTML = `
+        <label>Question:</label>
+        <input type="text" name="questions[${questionIndex}].text" class="form-control mb-2" placeholder="Question Text" required>
+        <div class="optionsContainer">
+            <div class="form-group option-block">
+                <input type="text" name="questions[${questionIndex}].options[0].description" class="form-control mb-2" placeholder="Option 1" required>
+            </div>
+            <div class="form-group option-block">
+                <input type="text" name="questions[${questionIndex}].options[1].description" class="form-control mb-2" placeholder="Option 2" required>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary add-option-btn mb-2">Add Option</button>
+    `;
+    questionsContainer.appendChild(newQuestionBlock);
+
+    newQuestionBlock.querySelector('.add-option-btn').addEventListener('click', function () {
+      addOption(newQuestionBlock.querySelector('.optionsContainer'), questionIndex);
+    });
+  }
+
+  function addOption(optionsContainer, questionIdx) {
+    if (!optionIndices.hasOwnProperty(questionIdx)) {
+      optionIndices[questionIdx] = optionsContainer.children.length;
+    }
+
+    const optionCount = optionIndices[questionIdx];
+
+    const newOptionInput = document.createElement('div');
+    newOptionInput.className = 'form-group option-block';
+    newOptionInput.innerHTML = `
+        <input type="text" name="questions[${questionIdx}].options[${optionCount}].description" class="form-control mb-2" placeholder="Option ${optionCount + 1}" required>
+    `;
+
+    optionsContainer.appendChild(newOptionInput);
+
+    optionIndices[questionIdx]++;
+  }
+
+  document.getElementById('addQuestionBtn').addEventListener('click', addQuestionBlock);
+
+  document.querySelector('.add-option-btn').addEventListener('click', function () {
+    const firstOptionsContainer = document.querySelector('.optionsContainer');
+    addOption(firstOptionsContainer, 0);
+  });
+
+  document.querySelector('form').addEventListener('submit', function (event) {
+    let isValid = true;
+    for (let i = 0; i <= questionIndex; i++) {
+      const questionText = document.querySelector(`input[name="questions[${i}].text"]`);
+      if (!questionText || questionText.value.trim() === '') {
+        alert(`Question ${i + 1} must have text.`);
+        isValid = false;
+        break;
+      }
+
+      const options = document.querySelectorAll(`input[name^="questions[${i}].options"]`);
+      if (options.length < 2) {
+        alert(`Question ${i + 1} must have at least two options.`);
+        isValid = false;
+        break;
+      }
+
+      for (let j = 0; j < options.length; j++) {
+        const optionText = options[j];
+        if (!optionText || optionText.value.trim() === '') {
+          alert(`Option ${j + 1} in Question ${i + 1} must have text.`);
+          isValid = false;
+          break;
+        }
+      }
+
+      if (!isValid) break;
+    }
+
+    if (!isValid) {
+      event.preventDefault();
+    } else {
+      console.log("Form is valid, submitting...");
+    }
+  });
+
+</script>
+</body>
+</html>
