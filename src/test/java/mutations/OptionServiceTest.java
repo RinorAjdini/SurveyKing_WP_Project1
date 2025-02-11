@@ -1,5 +1,6 @@
 package mutations;
 import finki.ukim.mk.surveyKing.model.Option;
+import finki.ukim.mk.surveyKing.model.Question;
 import finki.ukim.mk.surveyKing.model.User;
 import finki.ukim.mk.surveyKing.repository.OptionRepository;
 import finki.ukim.mk.surveyKing.service.OptionService;
@@ -36,7 +37,7 @@ public class OptionServiceTest {
         mockOption.setVotes(0);
         mockOption.setUsers(new ArrayList<>());
 
-        mockUser = new User();   //inicijalizirame user ako ni e potreben
+        mockUser = new User();
         mockUser = new User();
         mockPoll = new Poll();
         lenient().when(optionRepository.findById(1L)).thenReturn(Optional.of(mockOption));
@@ -105,6 +106,101 @@ public class OptionServiceTest {
         optionService.deleteOption(1);
         verify(optionRepository, times(1)).deleteById(1L);
     }
+
+    @Test
+    void testGetOptionsByQuestionId() {
+        int questionId = 1;
+        Option option1 = new Option();
+        option1.setId(1);
+        Question question1 = new Question();
+        question1.setId(questionId);
+        option1.setQuestion(question1);
+
+        Option option2 = new Option();
+        option2.setId(2);
+        Question question2 = new Question();
+        question2.setId(2);
+        option2.setQuestion(question2);
+
+        List<Option> allOptions = List.of(option1, option2);
+        when(optionRepository.findAll()).thenReturn(allOptions);
+
+        List<Option> result = optionService.getOptionsByQuestionId(questionId);
+
+        assertEquals(1, result.size(), "Only one option should match the question ID");
+        assertEquals(option1, result.get(0), "The returned option should match the question ID");
+
+        assertFalse(result.contains(option2), "Options with a different question ID should not be included");
+    }
+    @Test
+    void testGetOptionsByQuestionId_NoMatchingOptions() {
+        int questionId = 1;
+        Option option = new Option();
+        option.setId(1);
+        Question question = new Question();
+        question.setId(2);
+        option.setQuestion(question);
+
+        List<Option> allOptions = List.of(option);
+        when(optionRepository.findAll()).thenReturn(allOptions);
+
+        List<Option> result = optionService.getOptionsByQuestionId(questionId);
+
+        assertTrue(result.isEmpty(), "The result should be empty when no options match the question ID");
+    }
+
+    @Test
+    void testGetOptionById_OptionNotFound() {
+        int optionId = 99;
+        when(optionRepository.findById((long) optionId)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            optionService.getOptionById(optionId);
+        });
+
+        assertEquals("Option not found", exception.getMessage(), "The exception message should match");
+    }
+
+    @Test
+    void testGetUsersWhoSelectedOption_InvalidOptionId() {
+        int optionId = 99;
+        when(optionRepository.findById((long) optionId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            optionService.getUsersWhoSelectedOption(optionId);
+        });
+
+        assertEquals("Invalid option ID", exception.getMessage(), "The exception message should match");
+    }
+    @Test
+    void testDecrementVote_InvalidOptionId() {
+        when(optionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            optionService.decrementVote(99, mockUser);
+        });
+
+        assertEquals("Invalid option ID", exception.getMessage());
+    }
+    @Test
+    void testDecrementVote_VotesCannotGoBelowZero() {
+        mockOption.setVotes(0);
+
+        optionService.decrementVote(1, mockUser);
+
+        assertEquals(0, mockOption.getVotes(), "Votes should not go below zero");
+    }
+    @Test
+    void testIncrementVote_InvalidOptionId() {
+        when(optionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            optionService.incrementVote(99, mockUser);
+        });
+
+        assertEquals("Invalid option ID", exception.getMessage());
+    }
+
 
 }
 

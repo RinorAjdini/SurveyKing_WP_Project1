@@ -19,14 +19,18 @@ public class Option {
     private int votes;
 
     private int orderIndex;
+
     @Transient
     private double percentage; // Not persisted in the database
+
     @ManyToOne
     @JoinColumn(name="question_id")
     private Question question;
+
     @ManyToOne
     @JoinColumn(name="poll_id")
     private Poll poll;
+
     @ManyToMany
     @JoinTable(
             name = "user_option", // Name of the join table
@@ -34,5 +38,4 @@ public class Option {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> users;
-
 }

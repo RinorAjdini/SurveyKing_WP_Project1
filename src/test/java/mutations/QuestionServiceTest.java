@@ -77,4 +77,33 @@ public class QuestionServiceTest {
         assertDoesNotThrow(() -> questionService.deleteQuestion(1));
         verify(questionRepository, times(1)).deleteById(1L);
     }
+    @Test
+    void testGetQuestionsByPollId_FilteringWorks() {
+        Poll otherPoll = new Poll();
+        otherPoll.setId(2);
+
+        Question question2 = new Question();
+        question2.setId(2);
+        question2.setPoll(otherPoll);
+        question2.setText("Another question?");
+
+        when(questionRepository.findAll()).thenReturn(Arrays.asList(mockQuestion, question2));
+
+        List<Question> result = questionService.getQuestionsByPollId(1);
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).getPoll().getId());
+    }
+
+    @Test
+    void testGetQuestionById_NotFound() {
+        when(questionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            questionService.getQuestionById(99);
+        });
+
+        assertEquals("Question not found", exception.getMessage());
+    }
+
 }

@@ -3,6 +3,7 @@ package finki.ukim.mk.surveyKing.service;
 import finki.ukim.mk.surveyKing.model.*;
 import finki.ukim.mk.surveyKing.repository.PollRepository;
 import finki.ukim.mk.surveyKing.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,59 +28,52 @@ public class PollService {
         pollRepository.deleteById(id);
     }
 
-public void updatePoll(Poll poll, PollData pollData) {
-    poll.setName(pollData.getName());
+    @Transactional
+    public void updatePoll(Poll poll, PollData pollData) {
+        poll.setName(pollData.getName());
 
-    List<Question> existingQuestions = poll.getQuestions();
-    List<QuestionData> newQuestionsData = pollData.getQuestions();
+        List<Question> existingQuestions = poll.getQuestions();
+        List<QuestionData> newQuestionsData = pollData.getQuestions();
 
-    for (int i = 0; i < newQuestionsData.size(); i++) {
-        QuestionData questionData = newQuestionsData.get(i);
-        Question question;
+        for (int i = 0; i < newQuestionsData.size(); i++) {
+            QuestionData questionData = newQuestionsData.get(i);
+            Question question;
 
-        if (i < existingQuestions.size()) {
-            question = existingQuestions.get(i);
-            question.setText(questionData.getText());
-        } else {
-            question = new Question();
-            question.setText(questionData.getText());
-            question.setPoll(poll);
-            poll.getQuestions().add(question);
-        }
-
-        List<Option> existingOptions = question.getOptions();
-        List<OptionData> newOptionsData = questionData.getOptions();
-
-        for (int j = 0; j < newOptionsData.size(); j++) {
-            OptionData optionData = newOptionsData.get(j);
-            Option option;
-
-            if (j < existingOptions.size()) {
-                option = existingOptions.get(j);
-                option.setDescription(optionData.getDescription());
+            if (i < existingQuestions.size()) {
+                question = existingQuestions.get(i);
+                question.setText(questionData.getText());
             } else {
-                option = new Option();
-                option.setDescription(optionData.getDescription());
-                option.setQuestion(question);
-                option.setPoll(poll);
-                question.getOptions().add(option);
+                question = new Question();
+                question.setText(questionData.getText());
+                question.setPoll(poll);
+                poll.getQuestions().add(question);
             }
-        }
 
-        if (existingOptions.size() > newOptionsData.size()) {
-            existingOptions.subList(newOptionsData.size(), existingOptions.size()).clear();
+            List<Option> existingOptions = question.getOptions();
+            List<OptionData> newOptionsData = questionData.getOptions();
+
+            for (int j = 0; j < newOptionsData.size(); j++) {
+                OptionData optionData = newOptionsData.get(j);
+                Option option;
+
+                if (j < existingOptions.size()) {
+                    option = existingOptions.get(j);
+                    option.setDescription(optionData.getDescription());
+                } else {
+                    option = new Option();
+                    option.setDescription(optionData.getDescription());
+                    option.setQuestion(question);
+                    option.setPoll(poll);
+                    question.getOptions().add(option);
+                }
+            }
+            pollRepository.save(poll);
         }
     }
 
-    if (existingQuestions.size() > newQuestionsData.size()) {
-        existingQuestions.subList(newQuestionsData.size(), existingQuestions.size()).clear();
-    }
-
-    pollRepository.save(poll);
-}
     public void likePoll(int pollId, Long userId) {
-        Poll poll = pollRepository.findById(pollId).orElseThrow(() -> new RuntimeException("Poll not found"));
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Poll poll = pollRepository.findById(pollId).orElseThrow(() -> new RuntimeException("Poll not found")); //red
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")); //red
 
         if (!poll.getLikedUsers().contains(user)) {
             poll.getLikedUsers().add(user);

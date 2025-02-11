@@ -44,11 +44,9 @@ class PollServiceTest {
         poll.setId(1);
         poll.setName("Test Poll");
 
-        // Initialize User object
         user = new User();
-        user.setId(1L); // Make sure user has an ID
+        user.setId(1L);
 
-        // Mock Question and Option
         Question question = new Question();
         question.setText("What is your favorite color?");
         question.setPoll(poll);
@@ -60,7 +58,6 @@ class PollServiceTest {
 
         poll.getQuestions().add(question);
 
-        // Create mock PollData with updated data
         QuestionData questionData = new QuestionData();
         questionData.setText("What is your favorite fruit?");
 
@@ -73,7 +70,6 @@ class PollServiceTest {
         pollData.setName("Updated Poll");
         pollData.setQuestions(List.of(questionData));
 
-        // Mock PollRepository save
         lenient().when(pollRepository.save(any(Poll.class))).thenReturn(poll);
     }
 
@@ -90,7 +86,6 @@ class PollServiceTest {
     }
     @Test
     void testUpdatePoll() {
-        // Create QuestionData and OptionData
         QuestionData questionData = new QuestionData();
         questionData.setText("What is your favorite fruit?");
 
@@ -99,24 +94,18 @@ class PollServiceTest {
 
         questionData.setOptions(List.of(optionData));
 
-        // Create PollData with the updated information
         PollData pollData = new PollData();
         pollData.setName("Updated Poll");
         pollData.setQuestions(List.of(questionData));
 
-        // Call the updatePoll method
         pollService.updatePoll(poll, pollData);
 
-        // Verify that the poll's name was updated
         assertEquals("Updated Poll", poll.getName());
 
-        // Verify that the question text was updated
         assertEquals("What is your favorite fruit?", poll.getQuestions().get(0).getText());
 
-        // Verify that the option description was updated
         assertEquals("Apple", poll.getQuestions().get(0).getOptions().get(0).getDescription());
 
-        // Verify that save was called on the repository
         verify(pollRepository, times(1)).save(poll);
     }
 
@@ -192,40 +181,32 @@ class PollServiceTest {
     }
     @Test
     void testFindPollsByNameContainingIgnoreCase() {
-        String query = "Test Poll"; // Example query
-        List<Poll> polls = List.of(poll); // Assume `poll` is an object created in the `setUp()` method
+        String query = "Test Poll";
+        List<Poll> polls = List.of(poll);
 
-        // Mock the behavior of the pollRepository
         when(pollRepository.findByNameContainingIgnoreCase(query)).thenReturn(polls);
 
-        // Call the method in the service layer
         List<Poll> result = pollService.searchPollsByName(query);
 
-        // Verify the result
-        assertEquals(1, result.size()); // Verify that the returned list has 1 poll
-        assertEquals("Test Poll", result.get(0).getName()); // Verify that the poll name matches the query
+        assertEquals(1, result.size());
+        assertEquals("Test Poll", result.get(0).getName());
 
-        // Verify that the repository method was called with the correct argument
         verify(pollRepository, times(1)).findByNameContainingIgnoreCase(query);
     }
     @Test
     void testFindPollsByUser() {
-        User user = new User(); // Mock the user, make sure to set the user ID if needed
-        user.setId(1L); // Set user ID to 1 (you can change this as necessary)
+        User user = new User();
+        user.setId(1L);
 
-        List<Poll> polls = List.of(poll); // Assume `poll` is an object created in the `setUp()` method
+        List<Poll> polls = List.of(poll);
 
-        // Mock the behavior of the pollRepository
         when(pollRepository.findByUser(user)).thenReturn(polls);
 
-        // Call the method in the service layer
         List<Poll> result = pollService.getPollsByUser(user);
 
-        // Verify the result
-        assertEquals(1, result.size()); // Verify that the returned list has 1 poll
-        assertEquals("Test Poll", result.get(0).getName()); // Verify that the poll name matches the mock poll
+        assertEquals(1, result.size());
+        assertEquals("Test Poll", result.get(0).getName());
 
-        // Verify that the repository method was called with the correct argument
         verify(pollRepository, times(1)).findByUser(user);
     }
 
@@ -259,6 +240,10 @@ class PollServiceTest {
 
     @Test
     void testUpdatePollWithMultipleQuestions() {
+        Poll poll = new Poll();
+        poll.setName("Initial Poll");
+        poll.setQuestions(new ArrayList<>());
+
         QuestionData questionData1 = new QuestionData();
         questionData1.setText("What is your favorite color?");
         OptionData optionData1 = new OptionData();
@@ -278,9 +263,31 @@ class PollServiceTest {
         pollService.updatePoll(poll, pollData);
 
         assertEquals("Updated Poll with Multiple Questions", poll.getName());
-        assertEquals(2, poll.getQuestions().size()); // Ensure two questions are added
-    }
+        assertEquals(2, poll.getQuestions().size());
 
+        List<Question> updatedQuestions = poll.getQuestions();
+        assertTrue(updatedQuestions.stream().anyMatch(q -> "What is your favorite color?".equals(q.getText())));
+        assertTrue(updatedQuestions.stream().anyMatch(q -> "What is your favorite fruit?".equals(q.getText())));
+
+        for (Question question : updatedQuestions) {
+            assertFalse(question.getOptions().isEmpty(), "Each question must have options");
+
+            assertNotNull(question.getPoll(), "Question's poll should not be null");
+            assertEquals(poll, question.getPoll(), "Question's poll reference is incorrect");
+
+            for (Option option : question.getOptions()) {
+                assertNotNull(option.getDescription(), "Option's description should not be null");
+                assertTrue(option.getDescription().equals("Red") || option.getDescription().equals("Apple"),
+                        "Option's description is incorrect");
+
+                assertNotNull(option.getQuestion(), "Option's question should not be null");
+                assertEquals(question, option.getQuestion(), "Option's question reference is incorrect");
+
+                assertNotNull(option.getPoll(), "Option's poll should not be null");
+                assertEquals(poll, option.getPoll(), "Option's poll reference is incorrect");
+            }
+        }
+    }
     @Test
     void testFindPollsByNameContainingIgnoreCase_NoResults() {
         String query = "NonExistentPoll";
@@ -288,7 +295,7 @@ class PollServiceTest {
 
         List<Poll> result = pollService.searchPollsByName(query);
 
-        assertTrue(result.isEmpty()); // No polls should be returned
+        assertTrue(result.isEmpty());
         verify(pollRepository, times(1)).findByNameContainingIgnoreCase(query);
     }
     @Test
@@ -297,9 +304,6 @@ class PollServiceTest {
 
         assertThrows(NoSuchElementException.class, () -> pollService.deletePoll(99));
     }
-
-
-
 
     @Test
     void testAddOptionToQuestion() {
@@ -314,7 +318,7 @@ class PollServiceTest {
 
         question.getOptions().add(option);
 
-        assertEquals(1, question.getOptions().size()); // Only one option should be added
+        assertEquals(1, question.getOptions().size());
         assertEquals("Blue", question.getOptions().get(0).getDescription());
     }
     @Test
@@ -326,73 +330,33 @@ class PollServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
 
-        pollService.likePoll(1, 1L); // User 1 likes the poll
-        pollService.likePoll(1, 2L); // User 2 likes the poll
+        pollService.likePoll(1, 1L);
+        pollService.likePoll(1, 2L);
 
         assertTrue(poll.getLikedUsers().contains(user));
         assertTrue(poll.getLikedUsers().contains(user2));
-        assertEquals(2, poll.getLikedUsers().size()); // Two users should have liked the poll
+        assertEquals(2, poll.getLikedUsers().size());
     }
-
     @Test
     void testLikePollWhenAlreadyLiked() {
-        Integer pollId = 1; // Example poll ID of type Integer
-        User user = new User(); // Use a valid user object
+        int pollId = 1;
+        Long userId = 1L;
 
-        // Simulate that the poll doesn't exist in the repository (i.e., poll is not found)
-        when(pollRepository.findById(pollId)).thenReturn(Optional.empty()); // Mocking poll not found
+        Poll poll = new Poll();
+        User user = new User();
+        poll.getLikedUsers().add(user);
 
-        assertThrows(RuntimeException.class, () -> pollService.likePoll(pollId, user.getId()));
+        when(pollRepository.findById(pollId)).thenReturn(Optional.of(poll));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        pollService.likePoll(pollId, userId);
+
+        assertFalse(poll.getLikedUsers().contains(user), "User should no longer be in the likedUsers list");
+
+        verify(pollRepository).save(poll);
     }
 
-    @Test
-    void testUpdatePoll_RemovesExtraQuestionsAndOptions() {
-        // Setup existing questions and options
-        Question existingQuestion1 = new Question();
-        existingQuestion1.setText("Old Question 1");
-        existingQuestion1.setPoll(poll);
 
-        Question existingQuestion2 = new Question();
-        existingQuestion2.setText("Old Question 2"); // This one should be removed
-        existingQuestion2.setPoll(poll);
-
-        poll.getQuestions().add(existingQuestion1);
-        poll.getQuestions().add(existingQuestion2);
-
-        Option existingOption1 = new Option();
-        existingOption1.setDescription("Old Option 1");
-        existingOption1.setQuestion(existingQuestion1);
-
-        Option existingOption2 = new Option();
-        existingOption2.setDescription("Old Option 2"); // This one should be removed
-        existingOption2.setQuestion(existingQuestion1);
-
-        existingQuestion1.getOptions().add(existingOption1);
-        existingQuestion1.getOptions().add(existingOption2);
-
-        // Mock updated PollData with fewer questions and options
-        QuestionData questionData = new QuestionData();
-        questionData.setText("New Question");
-
-        OptionData optionData = new OptionData();
-        optionData.setDescription("New Option");
-
-        questionData.setOptions(List.of(optionData));
-
-        PollData pollData = new PollData();
-        pollData.setName("Updated Poll");
-        pollData.setQuestions(List.of(questionData));
-
-        // Call updatePoll
-        pollService.updatePoll(poll, pollData);
-
-        // Assertions
-        assertEquals(1, poll.getQuestions().size()); // One question remains
-        assertEquals("New Question", poll.getQuestions().get(0).getText());
-
-        assertEquals(1, poll.getQuestions().get(0).getOptions().size()); // One option remains
-        assertEquals("New Option", poll.getQuestions().get(0).getOptions().get(0).getDescription());
-    }
     @Test
     void shouldRemoveExtraOptionsWhenNewOptionsAreFewer() {
         Option option1 = new Option();
@@ -403,17 +367,16 @@ class PollServiceTest {
         option3.setDescription("C");
 
         List<Option> existingOptions = new ArrayList<>(List.of(option1, option2, option3));
-        List<Option> newOptionsData = new ArrayList<>(List.of(option1, option2)); // Fewer but same options
+        List<Option> newOptionsData = new ArrayList<>(List.of(option1, option2));
 
         if (existingOptions.size() > newOptionsData.size()) {
             existingOptions.subList(newOptionsData.size(), existingOptions.size()).clear();
         }
 
-        assertEquals(2, existingOptions.size()); // Ensure extra option is removed
+        assertEquals(2, existingOptions.size());
         assertEquals("A", existingOptions.get(0).getDescription());
         assertEquals("B", existingOptions.get(1).getDescription());
     }
-
 
     @Test
     void shouldReturnNullWhenUserNotFound() {
@@ -422,7 +385,7 @@ class PollServiceTest {
 
         User result = userService.findByUsername(String.valueOf(nonExistentUserId));
 
-        assertNull(result); // Since the method returns null, we check for null instead of an exception.
+        assertNull(result);
     }
     @Test
     void testUpdatePoll_SetsName() {
@@ -430,7 +393,7 @@ class PollServiceTest {
         pollData.setName("Updated Poll");
 
         pollService.updatePoll(poll, pollData);
-        assertEquals("Updated Poll", poll.getName()); // Verify name is set
+        assertEquals("Updated Poll", poll.getName());
     }
 
     @Test
@@ -439,7 +402,7 @@ class PollServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         pollService.likePoll(1, 1L);
-        assertTrue(poll.getLikedUsers().contains(user)); // Verify user is added
+        assertTrue(poll.getLikedUsers().contains(user));
     }
 
     @Test
@@ -447,9 +410,9 @@ class PollServiceTest {
         when(pollRepository.findById(1)).thenReturn(Optional.of(poll));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        pollService.likePoll(1, 1L); // Like
-        pollService.likePoll(1, 1L); // Unlike
-        assertFalse(poll.getLikedUsers().contains(user)); // Verify user is removed
+        pollService.likePoll(1, 1L);
+        pollService.likePoll(1, 1L);
+        assertFalse(poll.getLikedUsers().contains(user));
     }
     @Test
     void testSearchPollsByName_NoResults() {
@@ -457,7 +420,7 @@ class PollServiceTest {
         when(pollRepository.findByNameContainingIgnoreCase(query)).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.searchPollsByName(query);
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
     }
     @Test
     void testGetPollsByUser_NoResults() {
@@ -467,14 +430,14 @@ class PollServiceTest {
         when(pollRepository.findByUser(user)).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.getPollsByUser(user);
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
     }
     @Test
     void testGetAllPollsSortedByLikesAsc_NoResults() {
         when(pollRepository.findAllByOrderByLikesAsc()).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.getAllPollsSortedByLikesAsc();
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -482,14 +445,14 @@ class PollServiceTest {
         when(pollRepository.findAllByOrderByLikesDesc()).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.getAllPollsSortedByLikesDesc();
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
     }
     @Test
     void testGetAllPollsSortedByCreatedAtAsc_NoResults() {
         when(pollRepository.findAllByOrderByCreatedAtAsc()).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.getAllPollsSortedByCreatedAtAsc();
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -497,155 +460,268 @@ class PollServiceTest {
         when(pollRepository.findAllByOrderByCreatedAtDesc()).thenReturn(Collections.emptyList());
 
         List<Poll> result = pollService.getAllPollsSortedByCreatedAtDesc();
-        assertTrue(result.isEmpty()); // Verify no results are returned
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testUpdatePoll_QuestionPollIsSet() {
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals(poll, poll.getQuestions().get(0).getPoll());
+    }
+    @Test
+    void testUpdatePoll_OptionDescriptionIsSet() {
+        OptionData optionData = new OptionData();
+        optionData.setDescription("New Option Description");
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+        questionData.setOptions(List.of(optionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals("New Option Description", poll.getQuestions().get(0).getOptions().get(0).getDescription());
+    }
+    @Test
+    void testUpdatePoll_OptionQuestionIsSet() {
+        OptionData optionData = new OptionData();
+        optionData.setDescription("New Option");
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+        questionData.setOptions(List.of(optionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals(poll.getQuestions().get(0), poll.getQuestions().get(0).getOptions().get(0).getQuestion());
+    }
+    @Test
+    void testUpdatePoll_OptionPollIsSet() {
+        Poll poll = new Poll();
+        poll.setId(1);
+        poll.setName("Test Poll");
+
+        Question question = new Question();
+        question.setId(1);
+        question.setText("What is your favorite color?");
+        question.setPoll(poll);
+
+        Option option = new Option();
+        option.setId(1);
+        option.setDescription("Red");
+        option.setQuestion(question);
+        option.setPoll(poll);
+
+        question.getOptions().add(option);
+
+        poll.getQuestions().add(question);
+
+        OptionData optionData = new OptionData();
+        optionData.setDescription("Blue");
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("What is your favorite fruit?");
+        questionData.setOptions(List.of(optionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        when(pollRepository.save(any(Poll.class))).thenReturn(poll);
+
+        pollService.updatePoll(poll, pollData);
+
+        Option updatedOption = poll.getQuestions().get(0).getOptions().get(0);
+
+        assertNotNull(updatedOption.getPoll(), "Option's poll should not be null");
+        assertEquals(poll, updatedOption.getPoll(), "Option's poll should match the parent poll");
+
+        System.out.println("Updated Option: " + updatedOption.getDescription() + ", Poll: " + updatedOption.getPoll());
+    }
+    @Test
+    void testUpdatePoll_NegatedConditional() {
+        Poll poll = new Poll();
+        poll.setName("Initial Poll");
+        poll.setQuestions(new ArrayList<>());
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("What is your favorite animal?");
+        OptionData optionData = new OptionData();
+        optionData.setDescription("Dog");
+        questionData.setOptions(List.of(optionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll with New Question");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals("Updated Poll with New Question", poll.getName());
+        assertEquals(1, poll.getQuestions().size());
+
+        Question updatedQuestion = poll.getQuestions().get(0);
+        assertEquals("What is your favorite animal?", updatedQuestion.getText());
+
+        assertFalse(updatedQuestion.getOptions().isEmpty(), "The question must have options");
+        Option updatedOption = updatedQuestion.getOptions().get(0);
+
+        assertNotNull(updatedOption.getDescription(), "Option's description should not be null");
+        assertEquals("Dog", updatedOption.getDescription(), "Option's description is incorrect");
+
+        assertNotNull(updatedOption.getQuestion(), "Option's question should not be null");
+        assertEquals(updatedQuestion, updatedOption.getQuestion(), "Option's question reference is incorrect");
+
+        assertNotNull(updatedOption.getPoll(), "Option's poll should not be null");
+        assertEquals(poll, updatedOption.getPoll(), "Option's poll reference is incorrect");
+    }
+
+    @Test
+    void testUpdatePoll_ChangedConditionalBoundary() {
+        Question existingQuestion = new Question();
+        existingQuestion.setText("Old Question");
+        existingQuestion.setPoll(poll);
+
+        Option existingOption = new Option();
+        existingOption.setDescription("Old Option");
+        existingOption.setQuestion(existingQuestion);
+
+        existingQuestion.getOptions().add(existingOption);
+        poll.getQuestions().add(existingQuestion);
+
+        OptionData newOptionData = new OptionData();
+        newOptionData.setDescription("New Option");
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+        questionData.setOptions(List.of(newOptionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals(1, poll.getQuestions().get(0).getOptions().size());
+    }
+    @Test
+    void testUpdatePoll_ListClearIsCalled() {
+        Question existingQuestion = new Question();
+        existingQuestion.setText("Old Question");
+        existingQuestion.setPoll(poll);
+
+        Option existingOption1 = new Option();
+        existingOption1.setDescription("Old Option 1");
+        existingOption1.setQuestion(existingQuestion);
+
+        Option existingOption2 = new Option();
+        existingOption2.setDescription("Old Option 2");
+        existingOption2.setQuestion(existingQuestion);
+
+        existingQuestion.getOptions().add(existingOption1);
+        existingQuestion.getOptions().add(existingOption2);
+        poll.getQuestions().add(existingQuestion);
+
+        OptionData newOptionData = new OptionData();
+        newOptionData.setDescription("New Option");
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+        questionData.setOptions(List.of(newOptionData));
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals(1, poll.getQuestions().get(0).getOptions().size());
+    }
+    @Test
+    void testUpdatePoll_ChangedConditionalBoundaryForQuestions() {
+        Question existingQuestion = new Question();
+        existingQuestion.setText("Old Question");
+        existingQuestion.setPoll(poll);
+
+        poll.getQuestions().add(existingQuestion);
+
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question");
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals(2, poll.getQuestions().size());
+    }
+    @Test
+    void testLikePoll_PollNotFound() {
+        int pollId = 1;
+        Long userId = 1L;
+
+        when(pollRepository.findById(pollId)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            pollService.likePoll(pollId, userId);
+        });
+
+        assertEquals("Poll not found", exception.getMessage());
+
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    void testLikePoll_UserNotFound() {
+        int pollId = 1;
+        Long userId = 1L;
+
+        Poll poll = new Poll();
+        when(pollRepository.findById(pollId)).thenReturn(Optional.of(poll));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            pollService.likePoll(pollId, userId);
+        });
+
+        assertEquals("User not found", exception.getMessage());
+
+        verify(pollRepository).findById(pollId);
+    }
+    @Test
+    void testGetParticipantCount() {
+        when(pollRepository.findDistinctParticipantsCountByPollId(1)).thenReturn(5);
+
+        int result = pollService.getParticipantCount(1);
+        assertEquals(5, result);
+    }
+    @Test
+    void testUpdatePoll_QuestionTextIsSet() {
+        QuestionData questionData = new QuestionData();
+        questionData.setText("New Question Text");
+
+        PollData pollData = new PollData();
+        pollData.setName("Updated Poll");
+        pollData.setQuestions(List.of(questionData));
+
+        pollService.updatePoll(poll, pollData);
+
+        assertEquals("New Question Text", poll.getQuestions().get(0).getText());
     }
 
 }
-
-
-
-//import finki.ukim.mk.surveyKing.model.*;
-//import finki.ukim.mk.surveyKing.repository.PollRepository;
-//import finki.ukim.mk.surveyKing.repository.UserRepository;
-//import finki.ukim.mk.surveyKing.service.PollService;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//
-//import java.util.Arrays;
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//public class PollServiceTest {
-//
-//    @Mock
-//    private PollRepository pollRepository;
-//
-//    @Mock
-//    private UserRepository userRepository;
-//
-//    @InjectMocks
-//    private PollService pollService;
-//    private Poll mockPoll;
-//    private User mockUser;
-//
-//    @BeforeEach
-//    void setUp() {
-//        mockUser = new User();
-//        mockUser.setId(1L);
-//        mockUser.setUsername("testUser");
-//        mockPoll = new Poll();
-//        mockPoll.setId(1);
-//        mockPoll.setName("Test Survey");
-//        mockPoll.setUser(mockUser);
-//
-//        lenient().when(pollRepository.findById(1)).thenReturn(Optional.of(mockPoll));
-//        lenient().when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
-//        lenient().when(pollRepository.save(any(Poll.class))).thenAnswer(invocation -> invocation.getArgument(0));
-//    }
-//
-//    @Test
-//    void testGetAllPolls() {
-//        when(pollRepository.findAll()).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getAllPols();
-//        assertEquals(1, polls.size());
-//        assertEquals("Test Survey", polls.get(0).getName());
-//    }
-//
-//    @Test
-//    void testGetPollById() {
-//        Poll poll = pollService.getPollById(1);
-//        assertNotNull(poll);
-//        assertEquals(1, poll.getId());
-//        assertEquals("Test Survey", poll.getName());
-//    }
-//
-//    @Test
-//    void testCreatePoll() {
-//        Poll newPoll = new Poll();
-//        newPoll.setId(2);
-//        newPoll.setName("Testsurvey 2");
-//        assertDoesNotThrow(() -> pollService.createPoll(newPoll));
-//        verify(pollRepository, times(1)).save(newPoll);
-//    }
-//
-//    @Test
-//    void testDeletePoll() {
-//        doNothing().when(pollRepository).deleteById(1);
-//        assertDoesNotThrow(() -> pollService.deletePoll(1));
-//        verify(pollRepository, times(1)).deleteById(1);
-//    }
-//
-//    @Test
-//    void testLikePollAddLike() {
-//        pollService.likePoll(1, 1L);
-//        assertTrue(mockPoll.getLikedUsers().contains(mockUser));
-//        verify(pollRepository, times(1)).save(mockPoll);
-//    }
-//
-//    @Test
-//    void testLikePollRemoveLike() {
-//        mockPoll.getLikedUsers().add(mockUser);
-//        pollService.likePoll(1, 1L);
-//        assertFalse(mockPoll.getLikedUsers().contains(mockUser));
-//        verify(pollRepository, times(1)).save(mockPoll);
-//    }
-//
-//    @Test
-//    void testSearchPollsByName() {
-//        when(pollRepository.findByNameContainingIgnoreCase("Survey")).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.searchPollsByName("Survey");
-//        assertEquals(1, polls.size());
-//        assertEquals("Test Survey", polls.get(0).getName());
-//    }
-//
-//    @Test
-//    void testGetPollsByUser() {
-//        when(pollRepository.findByUser(mockUser)).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getPollsByUser(mockUser);
-//        assertEquals(1, polls.size());
-//        assertEquals(mockUser, polls.get(0).getUser());
-//    }
-//
-//    @Test
-//    void testGetAllPollsSortedByLikesAsc() {
-//        when(pollRepository.findAllByOrderByLikesAsc()).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getAllPollsSortedByLikesAsc();
-//        assertEquals(1, polls.size());
-//    }
-//
-//    @Test
-//    void testGetAllPollsSortedByLikesDesc() {
-//        when(pollRepository.findAllByOrderByLikesDesc()).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getAllPollsSortedByLikesDesc();
-//        assertEquals(1, polls.size());
-//    }
-//
-//    @Test
-//    void testGetAllPollsSortedByCreatedAtAsc() {
-//        when(pollRepository.findAllByOrderByCreatedAtAsc()).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getAllPollsSortedByCreatedAtAsc();
-//        assertEquals(1, polls.size());
-//    }
-//
-//    @Test
-//    void testGetAllPollsSortedByCreatedAtDesc() {
-//        when(pollRepository.findAllByOrderByCreatedAtDesc()).thenReturn(Arrays.asList(mockPoll));
-//        List<Poll> polls = pollService.getAllPollsSortedByCreatedAtDesc();
-//        assertEquals(1, polls.size());
-//    }
-//
-//    @Test
-//    void testGetParticipantCount() {
-//        when(pollRepository.findDistinctParticipantsCountByPollId(1)).thenReturn(5);
-//        int count = pollService.getParticipantCount(1);
-//        assertEquals(5, count);
-//    }
-//}

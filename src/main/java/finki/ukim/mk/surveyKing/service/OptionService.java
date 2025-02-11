@@ -32,9 +32,9 @@ public class OptionService {
     // Increment votes and associate the user with the option
     public void incrementVote(int optionId, User user) {
         Option option = optionRepository.findById((long) optionId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid option ID"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid option ID")); //red
         option.setVotes(option.getVotes() + 1);
-        // Add the user to the set if not already present
+
         if (!option.getUsers().contains(user)) {
             option.getUsers().add(user);
         }
@@ -42,8 +42,8 @@ public class OptionService {
     }
     public void decrementVote(int optionId, User user) {
         Option option = optionRepository.findById((long) optionId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid option ID"));
-        if (option.getVotes() > 0) {
+                .orElseThrow(() -> new IllegalArgumentException("Invalid option ID")); //red
+        if (option.getVotes() > 0) { //red
             option.setVotes(option.getVotes() - 1);
         }
         option.getUsers().remove(user);
