@@ -13,18 +13,14 @@ public class ProfilePageTest extends BaseTest {
     public void testProfilePage() {
         webDriver.get("http://localhost:9091/profile");
 
-        // Wait for page to load
         WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(5));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("h1")));
 
-        // Verify page title
         verifyPageTitle("Profile");
 
-        // Verify username is displayed
         WebElement userName = webDriver.findElement(By.xpath("//h3"));
         assert userName.getText().contains("Hello, ");
 
-        // Verify profile picture based on role (assumes 'ADMIN' role test case)
         WebElement profilePic = webDriver.findElement(By.tagName("img"));
         String imgSrc = profilePic.getAttribute("src");
         System.out.println("Profile Picture Source: " + imgSrc);
