@@ -17,12 +17,19 @@ public class Poll {
 
     private String name;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = new Date();
+        }
+    }
+
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // The user who created this poll
+    private User user;
 
     @ManyToMany
     @JoinTable(
@@ -40,4 +47,6 @@ public class Poll {
     public int getLikes() {
         return likedUsers.size(); // Calculate the number of likes dynamically
     }
+
+
 }

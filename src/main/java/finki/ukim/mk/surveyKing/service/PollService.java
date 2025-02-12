@@ -5,6 +5,7 @@ import finki.ukim.mk.surveyKing.repository.PollRepository;
 import finki.ukim.mk.surveyKing.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -72,8 +73,8 @@ public class PollService {
     }
 
     public void likePoll(int pollId, Long userId) {
-        Poll poll = pollRepository.findById(pollId).orElseThrow(() -> new RuntimeException("Poll not found")); //red
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")); //red
+        Poll poll = pollRepository.findById(pollId).orElseThrow(() -> new RuntimeException("Poll not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!poll.getLikedUsers().contains(user)) {
             poll.getLikedUsers().add(user);

@@ -253,11 +253,18 @@ public String createOrUpdateVote(@RequestParam("selectedOptions") List<Integer> 
 
     @PostMapping("/poll/{id}/like")
     public String likePoll(@PathVariable int id, Authentication authentication) {
-        User user = (User) authentication.getPrincipal(); // Get the authenticated user
-        pollService.likePoll(id, user.getId()); // Toggle the like/unlike state
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+
+        if (user != null) {
+            pollService.likePoll(id, user.getId());
+        } else {
+            return "redirect:/login";
+        }
 
         return "redirect:/"; // Redirect to the home page or wherever you want
     }
+
     @GetMapping("/poll/{id}/my-submission")
     public String viewMySubmission(@PathVariable("id") int pollId, Authentication authentication, Model model) {
         // Retrieve the poll by ID
